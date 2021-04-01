@@ -1,11 +1,12 @@
 import cv2
-from extract_blocks import extract_rectangles, predict_blocks
+from extract_blocks import extract_blocks, predict_blocks, extract_section
 import numpy as np
 from PIL import ImageGrab
-from game_rules import check_if_move_possible, divide_colors
+from game_rules import check_if_move_possible, divide_colors,check_section,check_move
 
 record = False
 predict = False
+draw_rects = False
 
 #Directory to write recorded frames
 counter = 0
@@ -15,7 +16,9 @@ write_directory = f'D:/Desktop/stage/images/raw/'
 framecounter = 0
 frames = 20
 
-
+c_hand = list()
+rectangles = list()
+sections = list()
 while True:
     hand = list()
     game_board = list()
@@ -37,6 +40,9 @@ while True:
     elif k == ord('p'):
         predict = not predict
         print(f'predicting {predict}')
+    elif k == ord('d'):
+        draw_rects = not draw_rects
+        print(f'drawing on screen')
 
     if record:
         framecounter+=1
@@ -44,31 +50,69 @@ while True:
             framecounter = framecounter-frames
             
             #Save frame to directory
-            cv2.imwrite(f'{write_directory}/{counter}_image.png', frame)
-            print(f'saved image {counter}')
+            # cv2.imwrite(f'{write_directory}/{counter}_image.png', frame)
+            # print(f'saved image {counter}')
             counter+=1
 
     if predict:
-        rectangles = extract_rectangles(frame)
-        cur_section = list()
+        sections = extract_section(frame)
+        sections = [ [section, []] for section in sections ]
+        if len(sections)>0:
+            for section in sections:
+                x,y,w,h = section[0]
+                cv2.rectangle(frame,(x,y),(x+w,y+h),(255,255,0),2)
+
+
+        rectangles = extract_blocks(frame)
+
+            # for s in sections:
+            #     msg = "section "
+            #     for r in s:
+            #         msg += f'{r[1]} {r[2]}'
+            #     print((msg))
+
+        predict = False
+        c_hand = divide_colors(hand)
+        print('-------------------------------------------------------------------------------------------')
+        # print(c_hand['blue'])
+        print('black',check_if_move_possible(c_hand['black']), ' red',check_if_move_possible(c_hand['red']))
+        print('yellow',check_if_move_possible(c_hand['yellow']), ' blue',check_if_move_possible(c_hand['blue']))
+        for rectangle in rectangles:
+                x,y,w,h = rectangle[0]
+                _,digit,color = rectangle
+                cv2.rectangle(frame,(x,y),(x+w,y+h),(0,0,255),2)
+
+                if y >350:
+                    hand.append([digit, color])
+                else:
+
+                    for section in sections:
+                        sx,sy,sw,sh = section[0]
+                        margin = 5
+
+                        if x>sx-margin and x+w < sx+sw+margin and y>sy-margin and y+h<sy+sh:
+                            section[1].append(rectangle)
+                font  = cv2.FONT_HERSHEY_SIMPLEX
+                fontScale  = 0.5
+
+        for section in sections:
+            msg = 'section with '
+            for block in section[1]:
+                msg+= f' {block[1]} {block[2]} '
+            move_type = check_section(section)
+            msg+= move_type
+            print(msg)
+
+
+    
+
+    if draw_rects:
         if len(rectangles)>0:
             for rectangle in rectangles:
                 x,y,w,h = rectangle[0]
                 _,digit,color = rectangle
-                
-                cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)
+                cv2.rectangle(frame,(x,y),(x+w,y+h),(0,0,255),2)
 
-                # cv2.rectangle(frame, (0, 350), (960, 540), (0,0,255),2)
-                if y >350:
-                    hand.append([digit, color])
-                # if len(game_board>1):
-                    # if game_board[-1][0]
-                    # game_board[-1]./append(predictions)
-
-
-                # predictions = predict_blocks(rectange, frame)
-                # print(predictions)
-                # for pred in predictions:
                 font  = cv2.FONT_HERSHEY_SIMPLEX
                 fontScale  = 0.5
 
@@ -96,25 +140,30 @@ while True:
     
                 cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),1)
 
+
+
+
+
+
+
+
     # print('--------------------')
+
+
+
+
+
     # for section in game_board:
     #     msg = 'section with '
     #     for block in section:
     #         msg+= f' {block[1]} {block[2]} '
     
-    #     print(msg)
+        # print(msg)
     # print(game_board)
     
 
-    c_hand = divide_colors(hand)
-    print('-------------------------------------------------------------------------------------------')
-    # print(c_hand['blue'])
-    print('black',check_if_move_possible(c_hand['black']), ' red',check_if_move_possible(c_hand['red']))
-    print('yellow',check_if_move_possible(c_hand['yellow']), ' blue',check_if_move_possible(c_hand['blue']))
     cv2.imshow('Game', frame)
 
-
-    
             
 cv2.destroyAllWindows()
 

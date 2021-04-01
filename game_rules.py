@@ -56,7 +56,7 @@ def divide_colors(hand):
         
 
 
-red = divide_colors(hand2)['blue']
+red = divide_colors(hand2)['red']
 blue = divide_colors(hand2)['blue']
 black = divide_colors(hand2)['black']
 yellow = divide_colors(hand2)['yellow']
@@ -65,6 +65,36 @@ print('red',check_if_move_possible(red))
 print('blue',check_if_move_possible(blue))
 print('black',check_if_move_possible(black))
 print('yellow',check_if_move_possible(yellow))
+
+
+
+
+
+def check_section(section):
+    digits = [block[1] for block in section[1]]
+    colors = [block[2] for block in section[1]]
+    #check if same
+    set_digits = [s for s in set(digits)]
+
+    if len(set_digits) == 1 or (len(set_digits) == 2 and (set_digits[0] == 0 or set_digits[1] == 0)):
+        return 's'
+    else:
+        return 'c'
+
+
+def check_move(section, hand, type):
+    digits = [block[1] for block in section[1]]
+    colors = [block[2] for block in section[1]]
+
+    for block in hand:
+        if type == 's' and block[1] == digits[1] and block[2] not in colors:
+            print(f'can place {block} in section {section}') 
+
+
+
+
+
+
 
 # print(divide_colors(hand2))
 

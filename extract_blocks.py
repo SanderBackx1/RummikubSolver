@@ -3,30 +3,33 @@ import cv2
 import numpy as np
 
 
-loaded_model = pickle.load(open('models/finalized_model5.sav', 'rb'))
+loaded_model = pickle.load(open('models/finalized_model7.sav', 'rb'))
 c_count=0;
 c_size = 'large'
-def extract_rectangles(img):
-    global c_size
-    # hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    # COLOR_MIN = np.array([136, 133, 124],np.uint8)
-    # COLOR_MAX = np.array([236, 234, 237],np.uint8)
-    # frame_threshed = cv2.inRange(img, COLOR_MIN, COLOR_MAX)
-    # ret,thresh = cv2.threshold(frame_threshed,127,255,0)
-    # blur = cv2.blur(thresh,(5,5))
-    # contours, hierarchy = cv2.findContours(blur,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-    # for cnt in contours:
-    #     x,y,w,h = cv2.boundingRect(cnt)
-    #     if x>100 and y > 25 and x < 180+620 and y < 400:
-    #         if w > 50 and h > 40 and h < 80:
-    #             # print(h)
-    #             # uncomment to show green rectangles
-    #             rectangles.append((x,y,w,h))
 
-
+def extract_section(img):
     rectangles = list()
+    hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    COLOR_MIN = np.array([136, 133, 124],np.uint8)
+    COLOR_MAX = np.array([236, 234, 237],np.uint8)
+    frame_threshed = cv2.inRange(img, COLOR_MIN, COLOR_MAX)
+    ret,thresh = cv2.threshold(frame_threshed,127,255,0)
+    blur = cv2.blur(thresh,(5,5))
+    contours, hierarchy = cv2.findContours(blur,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    for cnt in contours:
+        x,y,w,h = cv2.boundingRect(cnt)
+        if x>100 and y > 25 and x < 180+620 and y < 400:
+            if w > 50 and h > 40 and h < 80:
+                # print(h)
+                # uncomment to show green rectangles
+                rectangles.append((x,y,w,h))
+
+    return rectangles
 
 
+
+def extract_blocks(img):
+    rectangles = list()
     hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     COLOR_MIN = np.array([190, 190, 190],np.uint8)
     COLOR_MAX = np.array([240, 240, 240],np.uint8)
@@ -51,7 +54,7 @@ def extract_rectangles(img):
     
     
     # cv2.imshow('ddd', img);
-    cv2.imshow("thresh", binary_image)
+    # cv2.imshow("thresh", binary_image)
     return rectangles
 
 def predict_blocks(rectangles, im):
@@ -60,46 +63,20 @@ def predict_blocks(rectangles, im):
     block_w = 0
     b_predicts=list()
     global c_size
-    if h > 70:
-        blocks = int(w/50)
-        block_w = int(w/blocks)
-        c_size = 'large'
-    elif h > 60 and h < 70:
-        
-        blocks = int(w/46)
-        block_w = 46
-        c_size = 'medium'
 
-    elif h < 60 and h>50:
-        blocks = int(w/37)
-        block_w = int(w/blocks)
-        c_size = 'small'
-    else:
-        blocks = int(w/33)
-        block_w = int(w/blocks)
-        c_size = 'extrasmall'
-    for i in range(blocks):
-        # cv2.imshow('roi',im[y:y+h, x:x+w])
-        if c_size == "medium":
-            print('medium')
-            roi = im[y:y+h, x+(block_w*i) + (5 if (i+1)%3==0 else 0):x+(block_w*(i+1)  + (5 if (i+1)%3==0 else 0) )]
-            digit_predict = predict_digit(roi)
-            color_predict = predict_color(roi)
-            b_predicts.append([[ x+(block_w*i)  + (5 if (i+1)%3==0 else 0),y,block_w,h], digit_predict,color_predict])
-        else:
-            print(':)')
-            roi = im[y:y+h, x+(block_w*i):x+(block_w*(i+1)  )]
-            digit_predict = predict_digit(roi)
-            color_predict = predict_color(roi)
-            b_predicts.append([[ x+(block_w*i),y,block_w,h], digit_predict,color_predict])
-            roi = im[y:y+h, x+(block_w*i):x+(block_w*(i+1))]
-
+    roi = im[y:y+h, x+(block_w*i):x+(block_w*(i+1)  )]
+    digit_predict = predict_digit(roi)
+    color_predict = predict_color(roi)
+    b_predicts.append([[ x+(block_w*i),y,block_w,h], digit_predict,color_predict])
+    roi = im[y:y+h, x+(block_w*i):x+(block_w*(i+1))]
 
     return b_predicts
 
 def predict_digit(block):
     lower = [136, 133, 124]
     upper = [236, 234, 237]
+    if block.shape[1]>50:
+        block = block[:, 0:50]
 
     b_block = cv2.resize(block, (50,70), interpolation=cv2.INTER_CUBIC)
     global c_count
@@ -109,38 +86,23 @@ def predict_digit(block):
     imagem = cv2.bitwise_not(imthresh)
     contours, hierarchy = cv2.findContours(imagem,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     gray = cv2.cvtColor(b_block, cv2.COLOR_BGR2GRAY)
-    if c_size == 'medium':
-        width = int(gray.shape[1] * 1.1)
-        height = int(gray.shape[0] * 1.1)
-        dim = (width, height)
-        cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
-        gray = gray[9:39,9:39]
-    elif c_size == 'small':
-        width = int(gray.shape[1] * 1.2)
-        height = int(gray.shape[0] * 1.2)
-        dim = (width, height)
-        gray = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
-        gray = gray[10:40,10:40]
-    elif c_size =='extrasmall':
-        width = int(gray.shape[1] * 1.3)
-        height = int(gray.shape[0] * 1.3)
-        dim = (width, height)
-        print(dim)
-        gray = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
-        gray = gray[10:40,10:40]
-    else:
-        gray = gray[10:40,10:40]
+    gray = gray[5:45,5:45]
     
 
     _, binary_image = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU)
-   
 
+
+    
     # Predict
+    binary_image = cv2.resize(binary_image, (30,30), interpolation=cv2.INTER_CUBIC)
+
     b = binary_image.reshape(-1).astype(np.float32())
+
 
     result = loaded_model.predict([b]) 
     c_count+=1
     # cv2.imwrite(f'D:/Desktop/stage/blocks/a/roi_{c_count}_{result[0]}.jpg', binary_image) 
+    # print('save img')
     return result[0]
     
 
