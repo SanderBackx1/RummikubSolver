@@ -3,6 +3,7 @@ from extract_blocks import extract_blocks, predict_blocks, extract_section
 import numpy as np
 from PIL import ImageGrab
 from game_rules import check_if_move_possible, divide_colors,check_section,check_move
+from game import Game, Player, Block
 
 record = False
 predict = False
@@ -22,7 +23,11 @@ sections = list()
 
 
 
-
+game = Game()
+player1 = Player()
+ai_player = Player(True)
+game.add_player(player1)
+game.add_player(ai_player)
 
 
 def draw_rect(rectangle, frame):
@@ -58,10 +63,11 @@ def draw_rect(rectangle, frame):
     cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),1)
 
 
-
-
-
 while True:
+    
+    ai_player.reset_hand()
+    game.reset_board()
+
     hand = list()
     game_board = list()
     resolutionx, resolutiony = (960,540)
@@ -121,6 +127,11 @@ while True:
 
             if y >350:
                 hand.append([digit, color])
+                #get from bundle
+              
+                blocks = [x for x in game.bundle if x.digit == digit and x.color==color]
+                ai_player.add_to_hand(blocks[0])
+
             else:
 
                 for section in sections:
@@ -131,20 +142,40 @@ while True:
                         section[1].append(rectangle)
             font  = cv2.FONT_HERSHEY_SIMPLEX
             fontScale  = 0.5
+        
+            
+
+
         c_hand = divide_colors(hand)
+
+
         print('-------------------------------------------------------------------------------------------')
         # print(c_hand['blue'])
+        
+        h = [f'{x.digit} {x.color}' for x in ai_player.hand]
+        print(h)
+
+
         print('black',check_if_move_possible(c_hand['black']), ' red',check_if_move_possible(c_hand['red']))
         print('yellow',check_if_move_possible(c_hand['yellow']), ' blue',check_if_move_possible(c_hand['blue']))
 
+
+
         for section in sections:
-            msg = 'section with '
+            new=list()
             for block in section[1]:
-                msg+= f' {block[1]} {block[2]} '
+                add=[x for x in game.bundle if x.digit == block[1] and x.color == block[2]]
+                new.append(add[0])
+            game.add_section(new)
+
+        for section in game.board:
+            msg = 'section with '
+            for block in section:
+                msg+= f'{block.digit} {block.color} '
+
             move_type = check_section(section)
             msg+= move_type
             print(msg)
-
 
     
 

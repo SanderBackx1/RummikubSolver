@@ -71,8 +71,8 @@ print('yellow',check_if_move_possible(yellow))
 
 
 def check_section(section):
-    digits = [block[1] for block in section[1]]
-    colors = [block[2] for block in section[1]]
+    digits = [block.digit for block in section]
+    colors = [block.color for block in section]
     #check if same
     set_digits = [s for s in set(digits)]
 
