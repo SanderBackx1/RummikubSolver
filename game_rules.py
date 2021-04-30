@@ -56,16 +56,6 @@ def divide_colors(hand):
         
 
 
-red = divide_colors(hand2)['red']
-blue = divide_colors(hand2)['blue']
-black = divide_colors(hand2)['black']
-yellow = divide_colors(hand2)['yellow']
-
-print('red',check_if_move_possible(red))
-print('blue',check_if_move_possible(blue))
-print('black',check_if_move_possible(black))
-print('yellow',check_if_move_possible(yellow))
-
 
 
 

@@ -9,6 +9,7 @@ c_size = 'large'
 
 def extract_section(img):
     rectangles = list()
+
     hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     COLOR_MIN = np.array([136, 133, 124],np.uint8)
     COLOR_MAX = np.array([236, 234, 237],np.uint8)
@@ -16,6 +17,7 @@ def extract_section(img):
     ret,thresh = cv2.threshold(frame_threshed,127,255,0)
     blur = cv2.blur(thresh,(5,5))
     contours, hierarchy = cv2.findContours(blur,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
     for cnt in contours:
         x,y,w,h = cv2.boundingRect(cnt)
         if x>100 and y > 25 and x < 180+620 and y < 400:
@@ -42,7 +44,6 @@ def extract_blocks(img):
     imagem = cv2.bitwise_not(frame_threshed)
     _, binary_image = cv2.threshold(imagem, 0, 255, cv2.THRESH_OTSU)
     contours, hierarchy = cv2.findContours(binary_image,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-
     for cnt in contours:
 
         x,y,w,h = cv2.boundingRect(cnt)
@@ -88,7 +89,6 @@ def predict_digit(block):
     gray = cv2.cvtColor(b_block, cv2.COLOR_BGR2GRAY)
     gray = gray[5:45,5:45]
     
-
     _, binary_image = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU)
 
 
@@ -107,15 +107,9 @@ def predict_digit(block):
     
 
 def predict_color(block):
-    lower = [136, 133, 124]
-    upper = [236, 234, 237]
-    b_block = cv2.resize(block, (50,70), interpolation=cv2.INTER_CUBIC)
-    digit_only = b_block[10:40,10:40]
-    lower = np.array(lower, dtype = "uint8")
-    upper = np.array(upper, dtype = "uint8")
-    mask=cv2.inRange(digit_only, lower,upper)
-    output = cv2.bitwise_not(digit_only)
 
+    b_block = cv2.resize(block, (50,70), interpolation=cv2.INTER_CUBIC)
+    digit_only = b_block[5:45,5:45]
     pixels = np.float32(digit_only.reshape(-1, 3))
 
     n_colors = 2
