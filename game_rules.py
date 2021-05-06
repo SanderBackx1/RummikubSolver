@@ -60,6 +60,7 @@ def divide_colors(hand):
 
 
 
+
 def check_section(section):
     digits = [block.digit for block in section]
     colors = [block.color for block in section]

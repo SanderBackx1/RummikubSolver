@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 
-loaded_model = pickle.load(open('models/finalized_model7.sav', 'rb'))
+loaded_model = pickle.load(open('models/finalized_model8.sav', 'rb'))
 c_count=0;
 c_size = 'large'
 
@@ -101,7 +101,7 @@ def predict_digit(block):
 
     result = loaded_model.predict([b]) 
     c_count+=1
-    # cv2.imwrite(f'D:/Desktop/stage/blocks/a/roi_{c_count}_{result[0]}.jpg', binary_image) 
+    # cv2.imwrite(f'D:/Desktop/stage/blocks/d/roi_{c_count}_{result[0]}.jpg', binary_image) 
     # print('save img')
     return result[0]
     

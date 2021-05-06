@@ -223,6 +223,23 @@ _RKB = namedtuple("RummikubBoard", "tup instructions hand bag turn_moves inhand 
 
 class RummikubBoard(_RKB, Node):
         
+    def move_section_excess_to_hand(board, all_sections,hand):
+        for section in all_sections:
+            if len(section)>3:
+                digits, colors, section_type  = board.check_section_type(section)
+                if section_type == 's':
+                    for block in section:
+                        if block.digit not in [x.digit for x in hand]:
+                            hand.append(block)
+                            board.instructions += f"Using {block.digit} {block.color} from {[f'{x.digit} {x.color}' for x in section]}"
+                else:
+                    
+                    if section[-1].digit not in [x.digit for x in hand]:
+                        hand.append(section[-1])
+                        board.instructions += f"Using {block.digit} {block.color} from {[f'{x.digit} {x.color}' for x in section]}"
+                    elif section[0].digit not in [x.digit for x in hand]:
+                        hand.append(section[0])
+                        board.instructions += f"Using {block.digit} {block.color} from {[f'{x.digit} {x.color}' for x in section]}"
 
     def all_possible_moves(board,all_sections,hand):
         moves = list()
@@ -231,6 +248,8 @@ class RummikubBoard(_RKB, Node):
         cur_hand = sorted(cur_hand, key=lambda a: a.digit)
         cur_move_counting = list()
         cur_move_same = list()
+
+        board.move_section_excess_to_hand(all_sections,hand)
         for i in range(len(cur_hand)-1):
             cur_move_counting.clear()
             cur_move_same.clear()
@@ -239,7 +258,6 @@ class RummikubBoard(_RKB, Node):
             for block in cur_hand[i+1:]:
 
                 if ( block.digit  == cur_move_counting[-1].digit +1 and block.color == cur_move_counting[-1].color) or (block.digit == 0 or cur_move_counting[-1].digit == 0) :
-                    if block.digit == 0: print([f'{x.digit} {x.color} ' for x in cur_move_counting], ' joker')
                     cur_move_counting.append(block)
 
                 colors = [x.color for x in cur_move_same if not x.digit ==0]
@@ -256,10 +274,12 @@ class RummikubBoard(_RKB, Node):
             
             
 
-        # for sectionidx,section in enumerate(all_sections):
-        #     for blockidx,block in enumerate(hand):
-        #         if board.check_if_valid(section, block):
-        #             moves.append((block,section,blockidx,sectionidx))
+        for sectionidx,section in enumerate(all_sections):
+            for blockidx,block in enumerate(hand):
+                if board.check_if_valid(section, block):
+                    
+
+                    moves.append((block,section,blockidx,sectionidx))
         return tuple(moves)
 
     def check_hand_for_moves(hand):
@@ -379,6 +399,8 @@ class RummikubBoard(_RKB, Node):
 
                 if digits[0] == 0 and digits[1]-2 == block.digit:
                     valid = True
+
+                
                 # check if its in the middle or if its upper or lower
                 # if block.digit > digits[0] and block.digit<digits[-1]:
                 #     if digits[-1] - block.digit >=3:
@@ -388,6 +410,15 @@ class RummikubBoard(_RKB, Node):
                 elif block.digit == digits[-1]+1:
                     valid=True
         
+                elif len(digits)>=5: 
+                    if digits[2] == block.digit:
+                        valid = True
+                    elif digits[-3] == block.digit:
+                        valid = True
+                    elif len(digits)>6:
+                        for i in range(len(digits)-6):
+                            if digits[2+i] == block.digit:
+                                valid = True
         return valid
 
     def make_move(board, move):
